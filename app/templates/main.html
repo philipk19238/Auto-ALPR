@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block content %}
+<nav class="navbar" style="background-color: black;">
+    <div class="container" style="padding: 0px;">
+        <a href="{{ url_for('.landing' )}}" class="navbar-brand">
+            <h1 id="logo-text">KURUMA</h1>
+        </a>
+        <div class="d-flex flex-row-reverse">
+            <button class="btn mr-3" id="sign-up" onclick="redirect();">Add Your Spots</button>
+            <button class="btn mr-3" id="login">Welcome {{ name }}</button>
+        </div>
+    </div>
+</nav>
+<div class="container-fluid d-flex justify-content-center align-items-center">
+    <div class="overflow-auto" style="max-height: 100vh; width: 40vw; overflow-x:hidden !important ;">
+        <div class="container d-flex align-items-center" style="min-height: 15vh;">
+            <div>
+            <div class="container">
+            <h1 style="padding: 0px;" id="description-title">Parking in Austin</h1>
+        </div>
+            <div class="container mt-4" style="margin-top: 0px;">
+            <button class="btn description mr-2">Complex Type</button>
+            <button class="btn description mr-2">Price</button>
+            <button class="btn description mr-2">Flexible Book</button>
+            <button class="btn description mr-2">More Filters</button>
+        </div>
+        </div>
+    </div>
+        
+        {% for dic in locations %}
+        <div class="container" id="generated">
+            <div class="card d-flex" style="border-bottom: 1px solid grey">
+                <div class="container d-flex flex-row m-4">
+                    <img src="/static/image.png" style="height: 150px; width: auto; border-radius: 12px;">
+                    <div class="container">
+                        <h4 id="header" style="margin: 0px; padding: 0px;">{{dic.Description}}</h4>
+                        <h4 id="name-title" style="margin: 0px; padding: 0px;">{{dic.Name}}</h4>
+                        <h4 id="spot_num" class="mt-4">{{dic.num_spots}} Available Spots | Instant Book</h4>
+                        <h4 id="spot_num" class="mt-2">Covered Parking</h4>
+                        <p style="text-align: right;">
+                            <button class="book-button mr-2" id="{{ dic._id }}" onclick="book(this.id);">$ {{ range(5,12) | random}} / hour</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="container-fluid" id='map' style='width: 80vw; height: 100vh;'></div>
+</div>
+<div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true" id="purchase_modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="card">
+                <div class="container d-flex flex-row m-4 align-items-center justify-content-center">
+                    <img src="/static/image.png" style="height: 150px; width: auto; border-radius: 12px;">
+                    <div class="container" style="max-width: 20vw;">
+                        <h4 id="header" style="margin: 0px; padding: 0px;"><div id="description"></div></h4>
+                        <h4 id="name-title" style="margin: 0px; padding: 0px;"><div id="name"></div></h4>
+                        <h4 id="spots" class="mt-4"></h4>
+                        <h4 id="spot_num" class="mt-2">Covered Parking</h4>
+                        <p style="text-align: left;">
+                            <button class="book-button btn-block mt-4" onclick="submit();">$ {{ range(5,12) | random}} / hour</button>
+                        </p>
+                        <div id="_id" style="color: white;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+    
+        </div>
+    </div>
+</div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuc3dpY2siLCJhIjoiY2l1dTUzcmgxMDJ0djJ0b2VhY2sxNXBiMyJ9.25Qs4HNEkHubd4_Awbd8Og';
+
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/light-v10', // stylesheet location
+    center: [-97.75, 30.26], // starting position [lng, lat]
+    zoom: 12 // starting zoom
+});
+
+var geojson = {{geo|tojson|safe}}
+
+map.on('load', function() {
+    map.addSource('places', {
+        type: 'geojson',
+        data: geojson
+    });
+
+    map.addLayer({
+        "id": "places",
+        "type": "symbol",
+        "source": "places",
+        "layout": {
+            "icon-image": "car-15",
+            "icon-size": 2
+        },
+        "paint": {
+            /*"text-size": 10,*/
+        }
+    });
+
+});
+
+map.on('click', 'places', function(e) {
+    var coordinates = e.features[0].geometry.coordinates.slice();
+
+    var description = e.features[0].properties.description;
+
+    var name = e.features[0].properties.name;
+
+    var id = e.features[0].properties._id;
+
+    var spots = e.features[0].properties.spots;
+
+    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+
+        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+
+    }
+
+    document.getElementById('name').innerHTML = name;
+
+    document.getElementById('description').innerHTML = description;
+
+    document.getElementById('spots').innerHTML = spots + ' Available Spots | Instant Book';
+
+    document.getElementById('_id').innerHTML = id;
+
+    document.getElementById('_id').value = id;
+
+    $('#purchase_modal').modal('show');
+
+})
+
+map.on('mouseenter', 'places', function() {
+
+    map.getCanvas().style.cursor = 'pointer';
+
+});
+
+// Change it back to a pointer when it leaves.
+map.on('mouseleave', 'places', function() {
+
+    map.getCanvas().style.cursor = '';
+
+});
+
+function submit() {
+
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function() {
+
+        if (this.status == 200) {
+
+            var id = JSON.parse(this.response).message
+
+            window.location.href = `${window.origin}/confirm/${id}`
+        }
+    };
+    url = window.origin + '/map';
+
+    console.log(document.getElementById('_id').innerHTML);
+
+    request.open('POST', url, true);
+
+    request.setRequestHeader('Content-Type', 'application/json');
+
+    request.send(JSON.stringify({
+
+        id: document.getElementById('_id').innerHTML
+
+    }));
+
+};
+function book(id) {
+
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function() {
+
+        if (this.status == 200) {
+
+            var id = JSON.parse(this.response).message
+
+            window.location.href = `${window.origin}/confirm/${id}`
+        }
+    };
+    url = window.origin + '/map';
+
+    request.open('POST', url, true);
+
+    request.setRequestHeader('Content-Type', 'application/json');
+
+    request.send(JSON.stringify({
+
+        id: id
+
+    }));
+
+};
+
+function redirect(){
+    window.location.href = window.origin + '/add_complex';
+}
+</script>
+{% endblock content %}

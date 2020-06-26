@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid" style="padding: 0px;">
+    <div class="jumbotron" style="height: 100vh; background-color: white; position: relative;">
+        <div class="container d-flex justify-content-center">
+            <div class="card" style="width: 50rem; height: auto;" id="signup-card">
+                <div class="card-body" style="padding: 3rem;">
+                     <h4 id="join-text">Kuruma</h4>
+                <h1 id="create-text" class="mb-3" style="font-size: 40px;">Add Your Complex</h1>
+                    <div class="container h-100" id="form-container">
+                        <div class="row h-100 justify-content-center align-items-center">
+                            <form action="{{ url_for('.add_complex') }}" method="POST" class="col-8" id="form">
+                                <div class="container" id="working-wrapper">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-8">
+                                            <label for="apartment">Complex Name *</label>
+                                            <input type="text" class="form-control" name="apartment" placeholder="Ex: Callaway Apartments">
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="spots">Available Spots *</label>
+                                            <input type="text" class="form-control" name="spots">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                    	<label>Description *</label>
+                                    	<textarea class="form-control" id="description" name="description" placeholder="Description of your complex" rows="5"></textarea>
+                                    </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="container d-flex justify-content-center h-100" style="padding: 0px;">
+                        <div class="col-8 w-100">
+                            <p style="text-align: center;"><button class="btn btn-lg btn-primary btn-block" id="signin-button" type="submit" form="form">
+                                    Continue
+                                </button></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content %}
